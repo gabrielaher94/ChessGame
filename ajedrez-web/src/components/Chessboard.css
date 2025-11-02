@@ -1,0 +1,27 @@
+    .chessboard {
+    display: grid;
+    grid-template-columns: repeat(8, 60px);
+    grid-template-rows: repeat(8, 60px);
+    border: 4px solid #000;
+    width: fit-content;
+    height: fit-content;
+    margin: 0 auto;
+    }
+
+    .square {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+
+    .light {
+    background-color: #bdbdba;
+    }
+
+    .dark {
+    background-color: #6e6d6d;
+    }
