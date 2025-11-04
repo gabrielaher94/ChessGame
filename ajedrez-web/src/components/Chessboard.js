@@ -1,42 +1,89 @@
-import React from "react";
-import { FaChessKing, FaChessQueen, FaChessRook, FaChessBishop, FaChessKnight, FaChessPawn } from "react-icons/fa";
+import React, { useState } from "react";
+import {
+  FaChessKing,
+  FaChessQueen,
+  FaChessRook,
+  FaChessBishop,
+  FaChessKnight,
+  FaChessPawn,
+} from "react-icons/fa";
+import Piece from "./Piece";
 import "./Chessboard.css";
 
+const pieceIcons = {
+  king: FaChessKing,
+  queen: FaChessQueen,
+  rook: FaChessRook,
+  bishop: FaChessBishop,
+  knight: FaChessKnight,
+  pawn: FaChessPawn,
+};
+
 const Chessboard = () => {
-  const squares = [];
+  // la matriz 8x8
+  const initialBoard = Array(8)
+    .fill(null)
+    .map(() => Array(8).fill(null));
 
-  // Función que devuelve la pieza con el color adecuado
-  const getPiece = (row, col) => {
-    const isBlack = row < 2; // filas 0 y 1 → piezas negras
-    const color = isBlack ? "black" : "white";
+  // Piezas
+  initialBoard[0][3] = new Piece("king", "black");
+  initialBoard[7][3] = new Piece("king", "white");
+  initialBoard[0][4] = new Piece("queen", "black");
+  initialBoard[7][4] = new Piece("queen", "white");
+  initialBoard[0][0] = new Piece("rook", "black");
+  initialBoard[7][0] = new Piece("rook", "white");
+  initialBoard[0][7] = new Piece("rook", "black");
+  initialBoard[7][7] = new Piece("rook", "white");
+  initialBoard[0][2] = new Piece("bishop", "black");
+  initialBoard[7][2] = new Piece("bishop", "white");
+  initialBoard[0][5] = new Piece("bishop", "black");
+  initialBoard[7][5] = new Piece("bishop", "white");
+  initialBoard[0][1] = new Piece("knight", "black");
+  initialBoard[7][1] = new Piece("knight", "white");
+  initialBoard[0][6] = new Piece("knight", "black");
+  initialBoard[7][6] = new Piece("knight", "white");
+  initialBoard[1][0] = new Piece("pawn", "black");
+  initialBoard[6][0] = new Piece("pawn", "white");
+  initialBoard[1][1] = new Piece("pawn", "black");
+  initialBoard[6][1] = new Piece("pawn", "white");
+  initialBoard[1][2] = new Piece("pawn", "black");
+  initialBoard[6][2] = new Piece("pawn", "white");
+  initialBoard[1][3] = new Piece("pawn", "black");
+  initialBoard[6][3] = new Piece("pawn", "white");
+  initialBoard[1][4] = new Piece("pawn", "black");
+  initialBoard[6][4] = new Piece("pawn", "white");
+  initialBoard[1][5] = new Piece("pawn", "black");
+  initialBoard[6][5] = new Piece("pawn", "white");
+  initialBoard[1][6] = new Piece("pawn", "black");
+  initialBoard[6][6] = new Piece("pawn", "white");
+  initialBoard[1][7] = new Piece("pawn", "black");
+  initialBoard[6][7] = new Piece("pawn", "white");
 
-    // Filas iniciales de piezas grandes
-    const firstRowPieces = [FaChessRook, FaChessKnight, FaChessBishop, FaChessQueen, FaChessKing, FaChessBishop, FaChessKnight, FaChessRook];
 
-    if (row === 0 || row === 7) {
-      const Piece = firstRowPieces[col];
-      return <Piece color={color} />;
-    } else if (row === 1 || row === 6) {
-      return <FaChessPawn color={color} />;
-    }
-    return null; // casilla vacía
-  };
+  const [board, setBoard] = useState(initialBoard);
 
-  for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
-      const isDark = (row + col) % 2 === 1;
-      squares.push(
-        <div
-          key={`${row}-${col}`}
-          className={`square ${isDark ? "dark" : "light"}`}
-        >
-          {getPiece(row, col)}
-        </div>
-      );
-    }
-  }
+  return (
+    <div className="board">
+      {board.map((row, rowIndex) =>
+        row.map((cell, colIndex) => {
+          const isDark = (rowIndex + colIndex) % 2 === 1;
+          const squareColor = isDark ? "square dark" : "square light";
+          const PieceIcon = cell ? pieceIcons[cell.type] : null;
 
-  return <div className="chessboard">{squares}</div>;
+          return (
+            <div key={`${rowIndex}-${colIndex}`} className={squareColor}>
+              {PieceIcon && (
+                <PieceIcon
+                  color={cell.color === "white" ? "white" : "black"}
+                  size={32}
+                />
+              )}
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
 };
 
 export default Chessboard;
