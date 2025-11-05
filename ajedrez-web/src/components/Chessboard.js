@@ -20,12 +20,11 @@ const pieceIcons = {
 };
 
 const Chessboard = () => {
-  // la matriz 8x8
   const initialBoard = Array(8)
     .fill(null)
     .map(() => Array(8).fill(null));
 
-  // Piezas
+  // Colocación de piezas
   initialBoard[0][3] = new Piece("king", "black");
   initialBoard[7][3] = new Piece("king", "white");
   initialBoard[0][4] = new Piece("queen", "black");
@@ -42,25 +41,31 @@ const Chessboard = () => {
   initialBoard[7][1] = new Piece("knight", "white");
   initialBoard[0][6] = new Piece("knight", "black");
   initialBoard[7][6] = new Piece("knight", "white");
-  initialBoard[1][0] = new Piece("pawn", "black");
-  initialBoard[6][0] = new Piece("pawn", "white");
-  initialBoard[1][1] = new Piece("pawn", "black");
-  initialBoard[6][1] = new Piece("pawn", "white");
-  initialBoard[1][2] = new Piece("pawn", "black");
-  initialBoard[6][2] = new Piece("pawn", "white");
-  initialBoard[1][3] = new Piece("pawn", "black");
-  initialBoard[6][3] = new Piece("pawn", "white");
-  initialBoard[1][4] = new Piece("pawn", "black");
-  initialBoard[6][4] = new Piece("pawn", "white");
-  initialBoard[1][5] = new Piece("pawn", "black");
-  initialBoard[6][5] = new Piece("pawn", "white");
-  initialBoard[1][6] = new Piece("pawn", "black");
-  initialBoard[6][6] = new Piece("pawn", "white");
-  initialBoard[1][7] = new Piece("pawn", "black");
-  initialBoard[6][7] = new Piece("pawn", "white");
 
+  for (let i = 0; i < 8; i++) {
+    initialBoard[1][i] = new Piece("pawn", "black");
+    initialBoard[6][i] = new Piece("pawn", "white");
+  }
 
   const [board, setBoard] = useState(initialBoard);
+  const [selected, setSelected] = useState(null);
+  const [validMoves, setValidMoves] = useState([]);
+
+  const handleClick = (rowIndex, colIndex) => {
+    const piece = board[rowIndex][colIndex];
+
+    if (!piece) {
+      console.log("No hay pieza en esta casilla");
+      setSelected(null);
+      setValidMoves([]);
+      return;
+    }
+
+    console.log("Pieza seleccionada:", piece);
+    const moves = piece.getValidMoves(board);
+    setSelected([rowIndex, colIndex]);
+    setValidMoves(moves);
+  };
 
   return (
     <div className="board">
@@ -71,7 +76,11 @@ const Chessboard = () => {
           const PieceIcon = cell ? pieceIcons[cell.type] : null;
 
           return (
-            <div key={`${rowIndex}-${colIndex}`} className={squareColor}>
+            <div
+              key={`${rowIndex}-${colIndex}`}
+              className={squareColor}
+              onClick={() => handleClick(rowIndex, colIndex)}
+            >
               {PieceIcon && (
                 <PieceIcon
                   color={cell.color === "white" ? "white" : "black"}

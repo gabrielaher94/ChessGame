@@ -2,10 +2,10 @@
   display: grid;
   grid-template-columns: repeat(8, 60px);
   grid-template-rows: repeat(8, 60px);
-  border: 2px solid #333;
+  border: 3px solid #333;
   width: fit-content;
   height: fit-content;
-  margin: 0 auto;
+  margin: 20px auto;
 }
 
 .square {
@@ -14,6 +14,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
   font-size: 2rem;
 }
 
