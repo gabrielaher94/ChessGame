@@ -7,6 +7,9 @@
   height: fit-content;
   margin: 20px auto;
 }
+.selected {
+  outline: 3px solid yellow;
+}
 
 .square {
   width: 60px;

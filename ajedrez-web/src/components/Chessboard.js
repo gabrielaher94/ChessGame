@@ -51,21 +51,44 @@ const Chessboard = () => {
   const [selected, setSelected] = useState(null);
   const [validMoves, setValidMoves] = useState([]);
 
-  const handleClick = (rowIndex, colIndex) => {
-    const piece = board[rowIndex][colIndex];
+ const handleClick = (rowIndex, colIndex) => {
+  const piece = board[rowIndex][colIndex];
 
-    if (!piece) {
-      console.log("No hay pieza en esta casilla");
-      setSelected(null);
-      setValidMoves([]);
-      return;
+  // 🔹 Caso 1: no hay nada seleccionado todavía
+  if (!selected) {
+    if (piece) {
+      console.log("Seleccionaste:", piece.type, piece.color);
+      setSelected([rowIndex, colIndex]);
     }
+    return;
+  }
 
-    console.log("Pieza seleccionada:", piece);
-    const moves = piece.getValidMoves(board);
+  // 🔹 Caso 2: ya hay algo seleccionado
+  const [selectedRow, selectedCol] = selected;
+  const selectedPiece = board[selectedRow][selectedCol];
+
+  // Si clickeas la misma casilla -> deseleccionar
+  if (selectedRow === rowIndex && selectedCol === colIndex) {
+    setSelected(null);
+    return;
+  }
+
+  // 🔹 Si haces clic en una pieza del mismo color, cambias selección
+  if (piece && piece.color === selectedPiece.color) {
     setSelected([rowIndex, colIndex]);
-    setValidMoves(moves);
-  };
+    return;
+  }
+
+  // 🔹 Si llegamos aquí, significa que quieres mover la pieza
+  const newBoard = board.map(row => [...row]); // copia del tablero
+  newBoard[rowIndex][colIndex] = selectedPiece; // mover pieza
+  newBoard[selectedRow][selectedCol] = null; // vaciar casilla anterior
+
+  setBoard(newBoard);
+  setSelected(null);
+  console.log(`Moviste ${selectedPiece.type} a (${rowIndex}, ${colIndex})`);
+};
+
 
   return (
     <div className="board">
