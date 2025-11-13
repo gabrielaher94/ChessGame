@@ -1,8 +1,8 @@
     class Piece {
-    constructor(type, color) {
+    constructor(type, color,position) {
         this.type = type; 
         this.color = color; 
-        this.position=this.position;
+        this.position=position;
     }
     //Metodo para redifinir en la subclase
     getValidMoves(board){

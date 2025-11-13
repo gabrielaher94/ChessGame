@@ -8,6 +8,8 @@ import {
   FaChessPawn,
 } from "react-icons/fa";
 import Piece from "./Piece";
+import Pawn from "./Pawn";
+import Knight from "./Knight";
 import "./Chessboard.css";
 
 const pieceIcons = {
@@ -20,102 +22,133 @@ const pieceIcons = {
 };
 
 const Chessboard = () => {
-  const initialBoard = Array(8)
-    .fill(null)
-    .map(() => Array(8).fill(null));
+  const inicialBoard = [];
 
-  // Colocación de piezas
-  initialBoard[0][3] = new Piece("king", "black");
-  initialBoard[7][3] = new Piece("king", "white");
-  initialBoard[0][4] = new Piece("queen", "black");
-  initialBoard[7][4] = new Piece("queen", "white");
-  initialBoard[0][0] = new Piece("rook", "black");
-  initialBoard[7][0] = new Piece("rook", "white");
-  initialBoard[0][7] = new Piece("rook", "black");
-  initialBoard[7][7] = new Piece("rook", "white");
-  initialBoard[0][2] = new Piece("bishop", "black");
-  initialBoard[7][2] = new Piece("bishop", "white");
-  initialBoard[0][5] = new Piece("bishop", "black");
-  initialBoard[7][5] = new Piece("bishop", "white");
-  initialBoard[0][1] = new Piece("knight", "black");
-  initialBoard[7][1] = new Piece("knight", "white");
-  initialBoard[0][6] = new Piece("knight", "black");
-  initialBoard[7][6] = new Piece("knight", "white");
+  for (let row = 0; row < 8; row++) {
+    const fila = [];
+    for (let col = 0; col < 8; col++) {
+      let pieza = null;
 
-  for (let i = 0; i < 8; i++) {
-    initialBoard[1][i] = new Piece("pawn", "black");
-    initialBoard[6][i] = new Piece("pawn", "white");
-  }
+      // Peones
+      if (row === 1) pieza = { icon: FaChessPawn, color: "black" };
+      if (row === 6) pieza = { icon: FaChessPawn, color: "white" };
 
-  const [board, setBoard] = useState(initialBoard);
-  const [selected, setSelected] = useState(null);
-  const [validMoves, setValidMoves] = useState([]);
+      // Piezas mayores negras
+      if (row === 0) {
+        if (col === 0 || col === 7) pieza = { icon: FaChessRook, color: "black" };
+        if (col === 1 || col === 6) pieza = { icon: FaChessKnight, color: "black" };
+        if (col === 2 || col === 5) pieza = { icon: FaChessBishop, color: "black" };
+        if (col === 3) pieza = { icon: FaChessQueen, color: "black" };
+        if (col === 4) pieza = { icon: FaChessKing, color: "black" };
+      }
 
- const handleClick = (rowIndex, colIndex) => {
-  const piece = board[rowIndex][colIndex];
+      // Piezas mayores blancas
+      if (row === 7) {
+        if (col === 0 || col === 7) pieza = { icon: FaChessRook, color: "white" };
+        if (col === 1 || col === 6) pieza = { icon: FaChessKnight, color: "white" };
+        if (col === 2 || col === 5) pieza = { icon: FaChessBishop, color: "white" };
+        if (col === 3) pieza = { icon: FaChessQueen, color: "white" };
+        if (col === 4) pieza = { icon: FaChessKing, color: "white" };
+      }
 
-  // 🔹 Caso 1: no hay nada seleccionado todavía
-  if (!selected) {
-    if (piece) {
-      console.log("Seleccionaste:", piece.type, piece.color);
-      setSelected([rowIndex, colIndex]);
+      fila.push(pieza);
     }
-    return;
+    inicialBoard.push(fila);
   }
 
-  // 🔹 Caso 2: ya hay algo seleccionado
-  const [selectedRow, selectedCol] = selected;
-  const selectedPiece = board[selectedRow][selectedCol];
+  const [board, setBoard] = useState(inicialBoard);
+  const [selected, setSelected] = useState(null);
 
-  // Si clickeas la misma casilla -> deseleccionar
-  if (selectedRow === rowIndex && selectedCol === colIndex) {
+  // Función que devuelve los movimientos válidos del peón
+  const getPawnMoves = (row, col) => {
+    const moves = [];
+    const pieza = board[row][col];
+    if (!pieza) return moves;
+
+    const direction = pieza.color === "white" ? -1 : 1;
+    const nextRow = row + direction;
+
+    // Avance 1 casilla
+    if (board[nextRow] && !board[nextRow][col]) {
+      moves.push([nextRow, col]);
+
+      // Avance 2 casillas desde fila inicial
+      const startRow = pieza.color === "white" ? 6 : 1;
+      if (row === startRow && board[nextRow + direction] && !board[nextRow + direction][col]) {
+        moves.push([nextRow + direction, col]);
+      }
+    }
+
+    // Capturas diagonales
+    for (let dc of [-1, 1]) {
+      const nextCol = col + dc;
+      if (board[nextRow] && board[nextRow][nextCol] && board[nextRow][nextCol].color !== pieza.color) {
+        moves.push([nextRow, nextCol]);
+      }
+    }
+
+    return moves;
+  };
+
+  const handleClick = (row, col) => {
+  const clickedPiece = board[row][col];
+
+  if (selected) {
+    const pieza = board[selected.row][selected.col];
+    let validMoves = [];
+
+    if (pieza?.icon === FaChessPawn) {
+      validMoves = getPawnMoves(selected.row, selected.col);
+    } else {
+      validMoves = [[row, col]];
+    }
+
+    // Mover si es un movimiento válido
+    if (validMoves.some(([r, c]) => r === row && c === col)) {
+      const newBoard = board.map(r => [...r]);
+      newBoard[row][col] = board[selected.row][selected.col];
+      newBoard[selected.row][selected.col] = null;
+      setBoard(newBoard);
+      setSelected(null);
+      return;
+    }
+
+    // Cambiar selección si haces click en otra pieza de tu color
+    if (clickedPiece && clickedPiece.color === pieza.color) {
+      setSelected({ row, col });
+      return;
+    }
+
+    // Si no es válido ni tu color, deseleccionar
     setSelected(null);
-    return;
+  } else if (clickedPiece) {
+    setSelected({ row, col });
   }
-
-  // 🔹 Si haces clic en una pieza del mismo color, cambias selección
-  if (piece && piece.color === selectedPiece.color) {
-    setSelected([rowIndex, colIndex]);
-    return;
-  }
-
-  // 🔹 Si llegamos aquí, significa que quieres mover la pieza
-  const newBoard = board.map(row => [...row]); // copia del tablero
-  newBoard[rowIndex][colIndex] = selectedPiece; // mover pieza
-  newBoard[selectedRow][selectedCol] = null; // vaciar casilla anterior
-
-  setBoard(newBoard);
-  setSelected(null);
-  console.log(`Moviste ${selectedPiece.type} a (${rowIndex}, ${colIndex})`);
 };
 
+  const squares = [];
+for (let row = 0; row < 8; row++) {
+  for (let col = 0; col < 8; col++) {
+    const isDark = (row + col) % 2 === 1;
+    const pieza = board[row][col];
 
-  return (
-    <div className="board">
-      {board.map((row, rowIndex) =>
-        row.map((cell, colIndex) => {
-          const isDark = (rowIndex + colIndex) % 2 === 1;
-          const squareColor = isDark ? "square dark" : "square light";
-          const PieceIcon = cell ? pieceIcons[cell.type] : null;
+    squares.push(
+      <div
+        key={`${row}-${col}`}
+        className={`square ${isDark ? "dark" : "light"}`}
+        style={{
+          border: selected?.row === row && selected?.col === col ? "3px solid yellow" : "none"
+        }}
+        onClick={() => handleClick(row, col)}
+      >
+        {pieza && <pieza.icon size={48} color={pieza.color} />}
+      </div>
+    );
+  }
+}
 
-          return (
-            <div
-              key={`${rowIndex}-${colIndex}`}
-              className={squareColor}
-              onClick={() => handleClick(rowIndex, colIndex)}
-            >
-              {PieceIcon && (
-                <PieceIcon
-                  color={cell.color === "white" ? "white" : "black"}
-                  size={32}
-                />
-              )}
-            </div>
-          );
-        })
-      )}
-    </div>
-  );
+  return <div className="Tablero">{squares}</div>;
 };
+
 
 export default Chessboard;

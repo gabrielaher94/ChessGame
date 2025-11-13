@@ -1,4 +1,4 @@
-    // src/components/Pawn.js
+// src/components/Pawn.js
     import Piece from "./Piece";
 
     class Pawn extends Piece {
@@ -36,3 +36,5 @@
     }
 
     export default Pawn;
+
+    
