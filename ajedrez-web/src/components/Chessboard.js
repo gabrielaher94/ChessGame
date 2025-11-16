@@ -34,18 +34,24 @@ const Chessboard = () => {
 
       // Piezas negras
       if (row === 0) {
-        if (col === 0 || col === 7) pieza = { icon: FaChessRook, color: "black" };
-        if (col === 1 || col === 6) pieza = { icon: FaChessKnight, color: "black" };
-        if (col === 2 || col === 5) pieza = { icon: FaChessBishop, color: "black" };
+        if (col === 0 || col === 7)
+          pieza = { icon: FaChessRook, color: "black" };
+        if (col === 1 || col === 6)
+          pieza = { icon: FaChessKnight, color: "black" };
+        if (col === 2 || col === 5)
+          pieza = { icon: FaChessBishop, color: "black" };
         if (col === 3) pieza = { icon: FaChessQueen, color: "black" };
         if (col === 4) pieza = { icon: FaChessKing, color: "black" };
       }
 
       // Piezas blancas
       if (row === 7) {
-        if (col === 0 || col === 7) pieza = { icon: FaChessRook, color: "white" };
-        if (col === 1 || col === 6) pieza = { icon: FaChessKnight, color: "white" };
-        if (col === 2 || col === 5) pieza = { icon: FaChessBishop, color: "white" };
+        if (col === 0 || col === 7)
+          pieza = { icon: FaChessRook, color: "white" };
+        if (col === 1 || col === 6)
+          pieza = { icon: FaChessKnight, color: "white" };
+        if (col === 2 || col === 5)
+          pieza = { icon: FaChessBishop, color: "white" };
         if (col === 3) pieza = { icon: FaChessQueen, color: "white" };
         if (col === 4) pieza = { icon: FaChessKing, color: "white" };
       }
@@ -103,6 +109,41 @@ const Chessboard = () => {
   };
 
   // ------------------------------
+  // MOVIMIENTOS DEL CABALLO
+  // ------------------------------
+  const getKnightMoves = (row, col) => {
+    const pieza = board[row][col];
+    if (!pieza) return [];
+
+    const jumps = [
+      [-2, -1],
+      [-2, 1],
+      [-1, -2],
+      [-1, 2],
+      [1, -2],
+      [1, 2],
+      [2, -1],
+      [2, 1],
+    ];
+
+    const moves = [];
+
+    for (let [dr, dc] of jumps) {
+      const r = row + dr;
+      const c = col + dc;
+
+      if (r >= 0 && r < 8 && c >= 0 && c < 8) {
+        const target = board[r][c];
+        if (!target || target.color !== pieza.color) {
+          moves.push([r, c]);
+        }
+      }
+    }
+
+    return moves;
+  };
+
+  // ------------------------------
   // MANEJO DE CLICS
   // ------------------------------
   const handleClick = (row, col) => {
@@ -124,8 +165,10 @@ const Chessboard = () => {
 
       if (pieza?.icon === FaChessPawn) {
         validMoves = getPawnMoves(selected.row, selected.col);
+      } else if (pieza?.icon === FaChessKnight) {
+        validMoves = getKnightMoves(selected.row, selected.col);
       } else {
-        validMoves = [[row, col]];
+        validMoves = [];
       }
 
       // Movimiento válido
