@@ -1,33 +1,15 @@
     // src/components/Queen.js
     import Piece from "./Piece";
+    import Rook from "./Rook";
+    import Bishop from "./Bishop";
 
+    // Opcional: reutilizamos la lógica combinada
     class Queen extends Piece {
     getValidMoves(board) {
-        const moves = [];
-        const [row, col] = this.position;
-        const directions = [
-        [-1, 0], [1, 0], [0, -1], [0, 1],
-        [-1, -1], [-1, 1], [1, -1], [1, 1],
-        ];
-
-        for (let [dr, dc] of directions) {
-        let r = row + dr;
-        let c = col + dc;
-        while (r >= 0 && r < 8 && c >= 0 && c < 8) {
-            if (board[r][c] === null) {
-            moves.push([r, c]);
-            } else {
-            if (board[r][c].color !== this.color) {
-                moves.push([r, c]);
-            }
-            break;
-            }
-            r += dr;
-            c += dc;
-        }
-        }
-
-        return moves;
+        // crear instancias temporales para reusar lógica de Rook y Bishop
+        const r = new Rook(this.color, this.position);
+        const b = new Bishop(this.color, this.position);
+        return [...r.getValidMoves(board), ...b.getValidMoves(board)];
     }
     }
 

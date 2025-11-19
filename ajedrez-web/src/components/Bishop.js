@@ -5,20 +5,21 @@
     getValidMoves(board) {
         const moves = [];
         const [row, col] = this.position;
-        const directions = [
-        [-1, -1], [-1, 1], [1, -1], [1, 1], // diagonales
+        const dirs = [
+        [-1, -1], [-1, 1],
+        [1, -1], [1, 1],
         ];
+        const inside = (r, c) => r >= 0 && r < 8 && c >= 0 && c < 8;
 
-        for (let [dr, dc] of directions) {
+        for (const [dr, dc] of dirs) {
         let r = row + dr;
         let c = col + dc;
-        while (r >= 0 && r < 8 && c >= 0 && c < 8) {
-            if (board[r][c] === null) {
+        while (inside(r, c)) {
+            const target = board[r][c];
+            if (!target) {
             moves.push([r, c]);
             } else {
-            if (board[r][c].color !== this.color) {
-                moves.push([r, c]);
-            }
+            if (target.color !== this.color) moves.push([r, c]);
             break;
             }
             r += dr;

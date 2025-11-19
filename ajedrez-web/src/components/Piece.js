@@ -1,6 +1,6 @@
     class Piece {
-    constructor(type, color,position) {
-        this.type = type; 
+    constructor(color,position) {
+        this.icon=null; 
         this.color = color; 
         this.position=position;
     }

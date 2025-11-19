@@ -1,3 +1,4 @@
+// src/components/Chessboard.js
 import React, { useState } from "react";
 import {
   FaChessKing,
@@ -7,226 +8,134 @@ import {
   FaChessKnight,
   FaChessPawn,
 } from "react-icons/fa";
+
+import Queen from "./Queen";
+import King from "./King";
+import Knight from "./Knight";
+import Rook from "./Rook";
+import Pawn from "./Pawn";
+import Bishop from "./Bishop";
+
 import "./Chessboard.css";
 
-// ICONOS
-const pieceIcons = {
-  king: FaChessKing,
-  queen: FaChessQueen,
-  rook: FaChessRook,
-  bishop: FaChessBishop,
-  knight: FaChessKnight,
-  pawn: FaChessPawn,
-};
-
 const Chessboard = () => {
-  const inicialBoard = [];
+  // Crea tablero vacío 8x8
+  const createEmptyBoard = () => Array.from({ length: 8 }, () => Array(8).fill(null));
 
-  // Generar tablero inicial
-  for (let row = 0; row < 8; row++) {
-    const fila = [];
-    for (let col = 0; col < 8; col++) {
-      let pieza = null;
+  // Helper para crear pieza (instancia) y asignarle icono
+  const crearPieza = (Clase, color, row, col, icon) => {
+    const p = new Clase(color, [row, col]);
+    p.icon = icon;
+    return p;
+  };
 
-      // Peones
-      if (row === 1) pieza = { icon: FaChessPawn, color: "black" };
-      if (row === 6) pieza = { icon: FaChessPawn, color: "white" };
+  // Inicializar posiciones iniciales con instancias
+  const inicialBoard = createEmptyBoard();
 
-      // Piezas negras
-      if (row === 0) {
-        if (col === 0 || col === 7)
-          pieza = { icon: FaChessRook, color: "black" };
-        if (col === 1 || col === 6)
-          pieza = { icon: FaChessKnight, color: "black" };
-        if (col === 2 || col === 5)
-          pieza = { icon: FaChessBishop, color: "black" };
-        if (col === 3) pieza = { icon: FaChessQueen, color: "black" };
-        if (col === 4) pieza = { icon: FaChessKing, color: "black" };
-      }
+  // Negras
+  inicialBoard[0][0] = crearPieza(Rook, "black", 0, 0, FaChessRook);
+  inicialBoard[0][1] = crearPieza(Knight, "black", 0, 1, FaChessKnight);
+  inicialBoard[0][2] = crearPieza(Bishop, "black", 0, 2, FaChessBishop);
+  inicialBoard[0][3] = crearPieza(Queen, "black", 0, 3, FaChessQueen);
+  inicialBoard[0][4] = crearPieza(King, "black", 0, 4, FaChessKing);
+  inicialBoard[0][5] = crearPieza(Bishop, "black", 0, 5, FaChessBishop);
+  inicialBoard[0][6] = crearPieza(Knight, "black", 0, 6, FaChessKnight);
+  inicialBoard[0][7] = crearPieza(Rook, "black", 0, 7, FaChessRook);
+  for (let c = 0; c < 8; c++) {
+    inicialBoard[1][c] = crearPieza(Pawn, "black", 1, c, FaChessPawn);
+  }
 
-      // Piezas blancas
-      if (row === 7) {
-        if (col === 0 || col === 7)
-          pieza = { icon: FaChessRook, color: "white" };
-        if (col === 1 || col === 6)
-          pieza = { icon: FaChessKnight, color: "white" };
-        if (col === 2 || col === 5)
-          pieza = { icon: FaChessBishop, color: "white" };
-        if (col === 3) pieza = { icon: FaChessQueen, color: "white" };
-        if (col === 4) pieza = { icon: FaChessKing, color: "white" };
-      }
-
-      fila.push(pieza);
-    }
-    inicialBoard.push(fila);
+  // Blancas
+  inicialBoard[7][0] = crearPieza(Rook, "white", 7, 0, FaChessRook);
+  inicialBoard[7][1] = crearPieza(Knight, "white", 7, 1, FaChessKnight);
+  inicialBoard[7][2] = crearPieza(Bishop, "white", 7, 2, FaChessBishop);
+  inicialBoard[7][3] = crearPieza(Queen, "white", 7, 3, FaChessQueen);
+  inicialBoard[7][4] = crearPieza(King, "white", 7, 4, FaChessKing);
+  inicialBoard[7][5] = crearPieza(Bishop, "white", 7, 5, FaChessBishop);
+  inicialBoard[7][6] = crearPieza(Knight, "white", 7, 6, FaChessKnight);
+  inicialBoard[7][7] = crearPieza(Rook, "white", 7, 7, FaChessRook);
+  for (let c = 0; c < 8; c++) {
+    inicialBoard[6][c] = crearPieza(Pawn, "white", 6, c, FaChessPawn);
   }
 
   const [board, setBoard] = useState(inicialBoard);
   const [selected, setSelected] = useState(null);
 
-  // 🔄 ESTADO DEL TURNO
-  const [turn, setTurn] = useState("white"); // blancas empiezan
+  // TURNO (no lo tocamos)
+  const [turn, setTurn] = useState("white");
 
-  // ------------------------------
-  // MOVIMIENTOS DEL PEÓN
-  // ------------------------------
-  const getPawnMoves = (row, col) => {
-    const moves = [];
-    const pieza = board[row][col];
-    if (!pieza) return moves;
-
-    const direction = pieza.color === "white" ? -1 : 1;
-    const nextRow = row + direction;
-
-    // Avance 1 casilla
-    if (board[nextRow] && !board[nextRow][col]) {
-      moves.push([nextRow, col]);
-
-      // Avance 2 casillas desde fila inicial
-      const startRow = pieza.color === "white" ? 6 : 1;
-      if (
-        row === startRow &&
-        board[nextRow + direction] &&
-        !board[nextRow + direction][col]
-      ) {
-        moves.push([nextRow + direction, col]);
-      }
-    }
-
-    // Capturas diagonales
-    for (let dc of [-1, 1]) {
-      const nextCol = col + dc;
-      if (
-        board[nextRow] &&
-        board[nextRow][nextCol] &&
-        board[nextRow][nextCol].color !== pieza.color
-      ) {
-        moves.push([nextRow, nextCol]);
-      }
-    }
-
-    return moves;
-  };
-
-  // ------------------------------
-  // MOVIMIENTOS DEL CABALLO
-  // ------------------------------
-  const getKnightMoves = (row, col) => {
-    const pieza = board[row][col];
-    if (!pieza) return [];
-
-    const jumps = [
-      [-2, -1],
-      [-2, 1],
-      [-1, -2],
-      [-1, 2],
-      [1, -2],
-      [1, 2],
-      [2, -1],
-      [2, 1],
-    ];
-
-    const moves = [];
-
-    for (let [dr, dc] of jumps) {
-      const r = row + dr;
-      const c = col + dc;
-
-      if (r >= 0 && r < 8 && c >= 0 && c < 8) {
-        const target = board[r][c];
-        if (!target || target.color !== pieza.color) {
-          moves.push([r, c]);
-        }
-      }
-    }
-
-    return moves;
-  };
-
-  // ------------------------------
-  // MANEJO DE CLICS
-  // ------------------------------
+  // Manejo de click (selección y movimiento)
   const handleClick = (row, col) => {
-    const clickedPiece = board[row][col];
+    const clicked = board[row][col];
 
-    // ===========================
-    // SI YA HAY PIEZA SELECCIONADA
-    // ===========================
+    // Si ya hay selección previa
     if (selected) {
       const pieza = board[selected.row][selected.col];
 
-      // ❗ Evita mover pieza del color incorrecto
-      if (pieza.color !== turn) {
+      // Evitar mover si la pieza seleccionada no es del turno
+      if (!pieza || pieza.color !== turn) {
         setSelected(null);
         return;
       }
 
-      let validMoves = [];
+      // obtener movimientos válidos desde la propia pieza
+      const validMoves = pieza.getValidMoves(board);
 
-      if (pieza?.icon === FaChessPawn) {
-        validMoves = getPawnMoves(selected.row, selected.col);
-      } else if (pieza?.icon === FaChessKnight) {
-        validMoves = getKnightMoves(selected.row, selected.col);
-      } else {
-        validMoves = [];
-      }
-
-      // Movimiento válido
+      // si el click es un movimiento válido, mover la pieza
       if (validMoves.some(([r, c]) => r === row && c === col)) {
-        const newBoard = board.map((r) => [...r]);
+        const newBoard = board.map((r) => r.slice());
 
-        newBoard[row][col] = board[selected.row][selected.col];
+        newBoard[row][col] = pieza;
         newBoard[selected.row][selected.col] = null;
+
+        // actualizar posición interna de la pieza
+        pieza.position = [row, col];
 
         setBoard(newBoard);
         setSelected(null);
 
-        // 🔄 CAMBIO DE TURNO
+        // CAMBIO DE TURNO — lo dejamos EXACTO
         setTurn(turn === "white" ? "black" : "white");
-
         return;
       }
 
-      // Selección de otra pieza del mismo color
-      if (clickedPiece && clickedPiece.color === pieza.color) {
+      // si se clickea otra pieza del mismo color -> cambiar selección
+      if (clicked && clicked.color === pieza.color) {
         setSelected({ row, col });
         return;
       }
 
+      // en cualquier otro caso, deseleccionar
       setSelected(null);
+      return;
     }
 
-    // ===========================
-    // NO HAY PIEZA SELECCIONADA
-    // ===========================
-    else if (clickedPiece) {
-      // ❗ Solo se puede seleccionar pieza del turno actual
-      if (clickedPiece.color !== turn) return;
-
+    // Si no hay selección previa y se clickea una pieza
+    if (clicked) {
+      // solo seleccionar si pertenece al turno actual
+      if (clicked.color !== turn) return;
       setSelected({ row, col });
     }
   };
 
-  // ------------------------------
-  // RENDER DEL TABLERO
-  // ------------------------------
+  // Render tablero
   const squares = [];
-  for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
-      const isDark = (row + col) % 2 === 1;
-      const pieza = board[row][col];
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const isDark = (r + c) % 2 === 1;
+      const pieza = board[r][c];
 
       squares.push(
         <div
-          key={`${row}-${col}`}
+          key={`${r}-${c}`}
           className={`square ${isDark ? "dark" : "light"}`}
           style={{
             border:
-              selected?.row === row && selected?.col === col
+              selected?.row === r && selected?.col === c
                 ? "3px solid yellow"
                 : "none",
           }}
-          onClick={() => handleClick(row, col)}
+          onClick={() => handleClick(r, c)}
         >
           {pieza && <pieza.icon size={48} color={pieza.color} />}
         </div>
