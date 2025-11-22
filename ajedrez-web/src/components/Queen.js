@@ -3,13 +3,18 @@
     import Rook from "./Rook";
     import Bishop from "./Bishop";
 
-    // Opcional: reutilizamos la lógica combinada
     class Queen extends Piece {
     getValidMoves(board) {
-        // crear instancias temporales para reusar lógica de Rook y Bishop
-        const r = new Rook(this.color, this.position);
-        const b = new Bishop(this.color, this.position);
-        return [...r.getValidMoves(board), ...b.getValidMoves(board)];
+        // Clonamos la posición por seguridad
+        const pos = [...this.position];
+
+        const rook = new Rook(this.color, pos);
+        const bishop = new Bishop(this.color, pos);
+
+        const rookMoves = rook.getValidMoves(board);
+        const bishopMoves = bishop.getValidMoves(board);
+
+        return [...rookMoves, ...bishopMoves];
     }
     }
 
