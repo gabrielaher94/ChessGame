@@ -65,6 +65,12 @@ const Chessboard = () => {
   const [selected, setSelected] = useState(null);
   const [validMoves, setValidMoves] = useState([]);
   const [turn, setTurn] = useState("white");
+  //Estados contador
+  const [whiteMoves, setWhiteMoves]=useState(0);
+  const [blackMoves, setBlackMoves]=useState(0);
+  //Piezas capturadas posicionar a los costados
+  const [capturedWhite, setCaptureWhite]=useState([]);
+  const [captureBlack, setCaptureBlack]=useState([]);
 
   const handleClick = (row, col) => {
     const clicked = board[row][col];
@@ -83,6 +89,15 @@ const Chessboard = () => {
       // Mover pieza si es un movimiento válido
       if (moves.some(([r, c]) => r === row && c === col)) {
         const newBoard = board.map(r => r.slice());
+        const piezaDestino=newBoard[row][col];
+        //Registro de captura
+        if(piezaDestino){
+          if(piezaDestino.color==="white"){
+            setCaptureWhite((prev)=>[...prev, piezaDestino]);
+          }else{
+            setCaptureBlack((prev)=>[...prev, piezaDestino]);
+          }
+        }
         newBoard[row][col] = pieza;
         newBoard[selected.row][selected.col] = null;
 
@@ -102,6 +117,10 @@ const Chessboard = () => {
           alert(`${!whiteKing ? "Negras" : "Blancas"} ganan!`);
           setBoard(createInitialBoard());
           setTurn("white");
+          setBlackMoves(0);
+          setWhiteMoves(0);
+          setCaptureBlack([]);
+          setCaptureWhite([]);
           setSelected(null);
           setValidMoves([]);
           return;
@@ -110,8 +129,15 @@ const Chessboard = () => {
         setBoard(newBoard);
         setSelected(null);
         setValidMoves([]);
+        if (turn=== "white"){
+          setWhiteMoves((prev)=>prev+1);
+        }else{
+          setBlackMoves((prev)=>prev+1);
+        }
+
         setTurn(turn === "white" ? "black" : "white");
         return;
+
       }
 
       // Seleccionar otra pieza del mismo color
@@ -161,11 +187,31 @@ const Chessboard = () => {
   }
 
   return (
+    <div style={{ display: "flex", flexDirection: "row", gap: "20px", alignItems: "center" }}>
+      
+      {/* 🟦 IZQUIERDA: piezas blancas capturadas */}
+      <div style={{ width: "80px", color: "white", textAlign: "center" }}>
+        <h4>♟️ Blancas</h4>
+        {capturedWhite.map((p, i) => (
+          <p.icon key={i} size={32} color="white" />
+        ))}
+      </div>
     <div>
       <h2 style={{ textAlign: "center", color: "white" }}>
         Turno: {turn === "white" ? "Blancas ♟️" : "Negras ♟️"}
       </h2>
+      <h3 style={{textAlign: "center", color:"gray"}}>
+        Jugadas-Blancas:{whiteMoves} | Negras:{blackMoves}
+      </h3>
       <div className="Tablero">{squares}</div>
+    </div>
+    {/* 🟦 DERECHA: piezas negras capturadas */}
+      <div style={{ width: "80px", color: "white", textAlign: "center" }}>
+        <h4>♟️ Negras</h4>
+        {captureBlack.map((p, i) => (
+          <p.icon key={i} size={32} color="black" />
+        ))}
+      </div>
     </div>
   );
 };
