@@ -47,6 +47,10 @@
         this.position = position;
         this.hasMoved = true;
     }
+    isPromotionSquare(){
+        const[row]=this.position;
+        return(this.color=== "white"&& row===0)||(this.color==="black"&& row===7);
     }
-
+    }
+    
     export default Pawn;
