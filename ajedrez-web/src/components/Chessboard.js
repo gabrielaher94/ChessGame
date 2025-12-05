@@ -73,9 +73,31 @@ const Chessboard = () => {
   const [capturedWhite, setCaptureWhite] = useState([]);
   const [captureBlack, setCaptureBlack] = useState([]);
 
-  // 🔥 Estados de coronación
   const [isPromoting, setIsPromoting] = useState(false);
   const [promotePos, setPromotePos] = useState(null);
+
+  // --------------------------------------------------
+  // Guarda movimientos (incluye enroque)
+  // --------------------------------------------------
+  const guardarMovimiento = (pieza, from, to, captura = null) => {
+    // Enroque
+    if (pieza instanceof King && Math.abs(from.col - to.col) === 2) {
+      setHistory(prev => [
+        ...prev,
+        pieza.color === "white" ? "♔ Enroque Blanco" : "♚ Enroque Negro"
+      ]);
+      return;
+    }
+
+    const letra = ["a", "b", "c", "d", "e", "f", "g", "h"];
+    const mov =
+      `${pieza.color === "white" ? "♙" : "♟"} ${pieza.constructor.name} ` +
+      `${letra[from.col]}${8 - from.row} → ${letra[to.col]}${8 - to.row}` +
+      (captura ? ` (x ${captura.constructor.name})` : "");
+
+    setHistory(prev => [...prev, mov]);
+  };
+  // --------------------------------------------------
 
   const handleClick = (row, col) => {
     const clicked = board[row][col];
@@ -103,8 +125,33 @@ const Chessboard = () => {
           }
         }
 
+        // Guardar historial
+        guardarMovimiento(pieza, { row: selected.row, col: selected.col }, { row, col }, piezaDestino);
+
+        // Mover pieza
         newBoard[row][col] = pieza;
         newBoard[selected.row][selected.col] = null;
+
+        // ENROQUE
+        if (pieza instanceof King && Math.abs(col - selected.col) === 2) {
+          // Enroque corto
+          if (col === 6) {
+            const rook = newBoard[row][7];
+            newBoard[row][5] = rook;
+            newBoard[row][7] = null;
+            rook.position = [row, 5];
+            rook.hasMoved = true;
+          }
+          // Enroque largo
+          if (col === 2) {
+            const rook = newBoard[row][0];
+            newBoard[row][3] = rook;
+            newBoard[row][0] = null;
+            rook.position = [row, 3];
+            rook.hasMoved = true;
+          }
+          pieza.hasMoved = true;
+        }
 
         if (pieza instanceof Pawn) {
           pieza.moveTo([row, col]);
@@ -112,7 +159,7 @@ const Chessboard = () => {
           pieza.position = [row, col];
         }
 
-        // 🔥 Detectar coronación
+        // Coronación
         if (pieza instanceof Pawn && pieza.isPromotionSquare()) {
           setPromotePos({ row, col, pieza });
           setIsPromoting(true);
@@ -140,6 +187,7 @@ const Chessboard = () => {
         setBoard(newBoard);
         setSelected(null);
         setValidMoves([]);
+
         if (turn === "white") setWhiteMoves(p => p + 1);
         else setBlackMoves(p => p + 1);
 
@@ -164,12 +212,12 @@ const Chessboard = () => {
     }
   };
 
-  // 🔥 Función que ejecuta la coronación
+  // --------------------------------------------------
+  // Coronación
+  // --------------------------------------------------
   const promotePawn = type => {
     if (!promotePos) return;
-
     const { row, col, pieza } = promotePos;
-
     const newBoard = board.map(r => r.slice());
 
     let newPiece;
@@ -195,15 +243,15 @@ const Chessboard = () => {
     }
 
     newBoard[row][col] = newPiece;
-
     setBoard(newBoard);
     setIsPromoting(false);
     setPromotePos(null);
-
     setTurn(turn === "white" ? "black" : "white");
   };
 
-  // Render del tablero
+  // --------------------------------------------------
+  // Render tablero
+  // --------------------------------------------------
   const squares = [];
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
@@ -233,10 +281,7 @@ const Chessboard = () => {
 
   return (
     <div style={{ display: "flex", flexDirection: "row", gap: "20px", alignItems: "center" }}>
-
-      {isPromoting && (
-        <PromotionModal onSelect={promotePawn} />
-      )}
+      {isPromoting && <PromotionModal onSelect={promotePawn} />}
 
       <div style={{ width: "80px", color: "white", textAlign: "center" }}>
         <h4>♟️ Blancas</h4>
