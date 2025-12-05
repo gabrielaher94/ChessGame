@@ -45,8 +45,7 @@ const Chessboard = () => {
     board[0][5] = crearPieza(Bishop, "black", 0, 5, FaChessBishop);
     board[0][6] = crearPieza(Knight, "black", 0, 6, FaChessKnight);
     board[0][7] = crearPieza(Rook, "black", 0, 7, FaChessRook);
-    for (let c = 0; c < 8; c++)
-      board[1][c] = crearPieza(Pawn, "black", 1, c, FaChessPawn);
+    for (let c = 0; c < 8; c++) board[1][c] = crearPieza(Pawn, "black", 1, c, FaChessPawn);
 
     board[7][0] = crearPieza(Rook, "white", 7, 0, FaChessRook);
     board[7][1] = crearPieza(Knight, "white", 7, 1, FaChessKnight);
@@ -56,8 +55,7 @@ const Chessboard = () => {
     board[7][5] = crearPieza(Bishop, "white", 7, 5, FaChessBishop);
     board[7][6] = crearPieza(Knight, "white", 7, 6, FaChessKnight);
     board[7][7] = crearPieza(Rook, "white", 7, 7, FaChessRook);
-    for (let c = 0; c < 8; c++)
-      board[6][c] = crearPieza(Pawn, "white", 6, c, FaChessPawn);
+    for (let c = 0; c < 8; c++) board[6][c] = crearPieza(Pawn, "white", 6, c, FaChessPawn);
 
     return board;
   };
@@ -76,11 +74,49 @@ const Chessboard = () => {
   const [isPromoting, setIsPromoting] = useState(false);
   const [promotePos, setPromotePos] = useState(null);
 
-  // --------------------------------------------------
-  // Guarda movimientos (incluye enroque)
-  // --------------------------------------------------
+  // ------------------------
+  // Funciones JAQUE / JAQUE MATE
+  // ------------------------
+  const simulateMove = (board, piece, r, c) => {
+    const newBoard = board.map(row => row.map(p => p));
+    const from = piece.position;
+    newBoard[r][c] = piece;
+    newBoard[from[0]][from[1]] = null;
+    piece.position = [r, c];
+    return newBoard;
+  };
+
+  const isKingInCheck = (board, color) => {
+    const allPieces = board.flat();
+    const king = allPieces.find(p => p instanceof King && p.color === color);
+    if (!king) return false; // Rey capturado
+    const [kr, kc] = king.position;
+
+    for (let piece of allPieces) {
+      if (!piece || piece.color === color) continue;
+      const moves = piece.getValidMoves(board);
+      if (moves.some(([r, c]) => r === kr && c === kc)) return true;
+    }
+    return false;
+  };
+
+  const isCheckmate = (board, color) => {
+    if (!isKingInCheck(board, color)) return false;
+    const allPieces = board.flat().filter(p => p && p.color === color);
+    for (let piece of allPieces) {
+      const moves = piece.getValidMoves(board);
+      for (let [r, c] of moves) {
+        const simulated = simulateMove(board, piece, r, c);
+        if (!isKingInCheck(simulated, color)) return false;
+      }
+    }
+    return true;
+  };
+
+  // ------------------------
+  // Guardar historial
+  // ------------------------
   const guardarMovimiento = (pieza, from, to, captura = null) => {
-    // Enroque
     if (pieza instanceof King && Math.abs(from.col - to.col) === 2) {
       setHistory(prev => [
         ...prev,
@@ -97,14 +133,15 @@ const Chessboard = () => {
 
     setHistory(prev => [...prev, mov]);
   };
-  // --------------------------------------------------
 
+  // ------------------------
+  // Manejo de click
+  // ------------------------
   const handleClick = (row, col) => {
     const clicked = board[row][col];
 
     if (selected) {
       const pieza = board[selected.row][selected.col];
-
       if (!pieza || pieza.color !== turn) {
         setSelected(null);
         setValidMoves([]);
@@ -112,20 +149,23 @@ const Chessboard = () => {
       }
 
       const moves = pieza.getValidMoves(board);
-
       if (moves.some(([r, c]) => r === row && c === col)) {
         const newBoard = board.map(r => r.slice());
         const piezaDestino = newBoard[row][col];
 
-        if (piezaDestino) {
-          if (piezaDestino.color === "white") {
-            setCaptureWhite(prev => [...prev, piezaDestino]);
-          } else {
-            setCaptureBlack(prev => [...prev, piezaDestino]);
-          }
+        // Simular movimiento y verificar jaque propio
+        const tempBoard = simulateMove(newBoard, pieza, row, col);
+        if (isKingInCheck(tempBoard, pieza.color)) {
+          alert("Movimiento inválido: deja a tu rey en jaque");
+          return;
         }
 
-        // Guardar historial
+        // Capturas
+        if (piezaDestino) {
+          if (piezaDestino.color === "white") setCaptureWhite(prev => [...prev, piezaDestino]);
+          else setCaptureBlack(prev => [...prev, piezaDestino]);
+        }
+
         guardarMovimiento(pieza, { row: selected.row, col: selected.col }, { row, col }, piezaDestino);
 
         // Mover pieza
@@ -134,7 +174,6 @@ const Chessboard = () => {
 
         // ENROQUE
         if (pieza instanceof King && Math.abs(col - selected.col) === 2) {
-          // Enroque corto
           if (col === 6) {
             const rook = newBoard[row][7];
             newBoard[row][5] = rook;
@@ -142,7 +181,6 @@ const Chessboard = () => {
             rook.position = [row, 5];
             rook.hasMoved = true;
           }
-          // Enroque largo
           if (col === 2) {
             const rook = newBoard[row][0];
             newBoard[row][3] = rook;
@@ -153,34 +191,13 @@ const Chessboard = () => {
           pieza.hasMoved = true;
         }
 
-        if (pieza instanceof Pawn) {
-          pieza.moveTo([row, col]);
-        } else {
-          pieza.position = [row, col];
-        }
+        if (pieza instanceof Pawn) pieza.moveTo([row, col]);
+        else pieza.position = [row, col];
 
         // Coronación
         if (pieza instanceof Pawn && pieza.isPromotionSquare()) {
           setPromotePos({ row, col, pieza });
           setIsPromoting(true);
-          return;
-        }
-
-        const allPieces = newBoard.flat();
-        const whiteKing = allPieces.find(p => p instanceof King && p.color === "white");
-        const blackKing = allPieces.find(p => p instanceof King && p.color === "black");
-
-        if (!whiteKing || !blackKing) {
-          alert(`${!whiteKing ? "Negras" : "Blancas"} ganan!`);
-          setBoard(createInitialBoard());
-          setTurn("white");
-          setBlackMoves(0);
-          setWhiteMoves(0);
-          setCaptureBlack([]);
-          setCaptureWhite([]);
-          setSelected(null);
-          setValidMoves([]);
-          setHistory([]);
           return;
         }
 
@@ -190,6 +207,46 @@ const Chessboard = () => {
 
         if (turn === "white") setWhiteMoves(p => p + 1);
         else setBlackMoves(p => p + 1);
+
+        // ------------------------
+        // Verificar JAQUE / JAQUE MATE / Rey capturado
+        // ------------------------
+        const allPieces = newBoard.flat();
+        const whiteKing = allPieces.find(p => p instanceof King && p.color === "white");
+        const blackKing = allPieces.find(p => p instanceof King && p.color === "black");
+
+        if (!whiteKing || !blackKing) {
+          alert(`${!whiteKing ? "Negras" : "Blancas"} ganan!`);
+          setBoard(createInitialBoard());
+          setTurn("white");
+          setWhiteMoves(0);
+          setBlackMoves(0);
+          setCaptureBlack([]);
+          setCaptureWhite([]);
+          setSelected(null);
+          setValidMoves([]);
+          setHistory([]);
+          return;
+        }
+
+        const enemyColor = turn === "white" ? "black" : "white";
+        if (isKingInCheck(newBoard, enemyColor)) {
+          if (isCheckmate(newBoard, enemyColor)) {
+            alert(`JAQUE MATE — Ganan las ${turn === "white" ? "BLANCAS" : "NEGRAS"}`);
+            setBoard(createInitialBoard());
+            setTurn("white");
+            setWhiteMoves(0);
+            setBlackMoves(0);
+            setCaptureBlack([]);
+            setCaptureWhite([]);
+            setSelected(null);
+            setValidMoves([]);
+            setHistory([]);
+            return;
+          } else {
+            alert("Jaque");
+          }
+        }
 
         setTurn(turn === "white" ? "black" : "white");
         return;
@@ -212,9 +269,9 @@ const Chessboard = () => {
     }
   };
 
-  // --------------------------------------------------
+  // ------------------------
   // Coronación
-  // --------------------------------------------------
+  // ------------------------
   const promotePawn = type => {
     if (!promotePos) return;
     const { row, col, pieza } = promotePos;
@@ -249,9 +306,9 @@ const Chessboard = () => {
     setTurn(turn === "white" ? "black" : "white");
   };
 
-  // --------------------------------------------------
-  // Render tablero
-  // --------------------------------------------------
+  // ------------------------
+  // Render del tablero
+  // ------------------------
   const squares = [];
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
@@ -259,18 +316,16 @@ const Chessboard = () => {
       const pieza = board[r][c];
       const isMoveOption = validMoves.some(([vr, vc]) => vr === r && vc === c);
 
+      let border = "none";
+      if (selected?.row === r && selected?.col === c) border = "3px solid yellow";
+      else if (isMoveOption) border = "3px solid green";
+      else if (pieza instanceof King && isKingInCheck(board, pieza.color)) border = "3px solid red";
+
       squares.push(
         <div
           key={`${r}-${c}`}
           className={`square ${isDark ? "dark" : "light"}`}
-          style={{
-            border:
-              selected?.row === r && selected?.col === c
-                ? "3px solid yellow"
-                : isMoveOption
-                ? "3px solid green"
-                : "none",
-          }}
+          style={{ border }}
           onClick={() => handleClick(r, c)}
         >
           {pieza && <pieza.icon size={48} color={pieza.color} />}
